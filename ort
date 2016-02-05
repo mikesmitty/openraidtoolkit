@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+
+#import argparse
+
+# TODO do stuff here
+#parse = argparse.ArgumentParser(
+
+#from sys import argv
+#driver = argv
+
+def find_tools():
+    supported_tools = {
+        'om':'omreport',
+        'tw':'tw_cli'
+    }
+
+    from distutils.spawn import find_executable
+    avail_tools = []
+    for tool, command in supported_tools.iteritems():
+        if find_executable(command):
+            avail_tools.append(tool)
+    return avail_tools
+
+class tw:
+    def __init__(self, controller='/c0', binary='tw_cli'):
+        self.controller = self.get_controller(controller)
+        self.binary = binary
+
+    def get_controller(self, controller):
+        import re
+        controller_regex = re.compile('/c[0-9]+')
+        controller_match = controller_regex.match(controller) 
+
+        if controller.isdigit() and controller >= 0:
+            return '/c' + str(controller)
+        elif controller_match:
+            return controller_match.group()
+        else:
+            return '/c0'
+
+    def get_battery(self):
+        import subprocess
+        command = self.binary + ' ' + self.controller + '/bbu show'
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+class om:
+    def __init__(self, controller='0', binary='omreport'):
+        self.controller = self.get_controller(controller)
+        self.binary = binary
+
+    def get_controller(self, controller):
+        if controller.isdigit() and controller >= 0:
+            return str(controller)
+        else:
+            return '0'
+
+    def get_battery(self, battery=''):
+        import subprocess
+        command = self.binary + ' storage battery ' + battery + 'controller=' + self.controller
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+avail_tools = find_tools()
+for driver in avail_tools:
+    # Call the relevant class by driver name
+    driver_class = globals()[driver]
+    card = driver_class()
+    print card.get_battery()
+
