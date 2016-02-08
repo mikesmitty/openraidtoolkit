@@ -1,16 +1,85 @@
 #!/usr/bin/env python
 
-#import argparse
+import argparse
 
 # TODO do stuff here
-#parse = argparse.ArgumentParser(
+parser = argparse.ArgumentParser(description='RAID controller management interface.')
+parser.add_argument('-d', action='store', help='Select RAID driver to use (overrides auto-detection)', dest='driver_name')
+parser.add_argument('-f', action='store', help='RAID controller software tool name to use (overrides auto-detection)', dest='driver_name')
+parser.add_argument('-c', action='store', default=0, help='Controller ID number', dest='controller_id', type=int)
+parser.add_argument('-b', action='store', default=0, help='Battery ID number', dest='battery_id', type=int)
 
-#from sys import argv
-#driver = argv
+subparsers = parser.add_subparsers(help='commands', dest='module')
+
+# Battery options
+battery_parser = subparsers.add_parser('battery', help='Manage controller battery')
+battery_parser.add_argument('option1', nargs='?', choices=['status', 'paper', 'scissors'])
+battery_parser.add_argument('option2', nargs='?', choices=['status', 'paper', 'scissors'])
+
+# Controller options
+controller_parser = subparsers.add_parser('controller', help='Manage RAID controller')
+
+# Disk options
+disk_parser = subparsers.add_parser('disk', help='Manage physical disks')
+
+#parsed_args = parser.parse_known_args()
+parsed_args = parser.parse_args()
+
+print parsed_args 
+
+# Define RAID driver modules
+# 3ware tw_cli
+class tw:
+    def __init__(self, controller='0', binary='tw_cli'):
+        self.controller = self.get_controller(controller)
+        self.binary = binary
+
+    def get_controller(self, controller):
+        if controller.isdigit() and controller >= 0:
+            return '/c' + str(controller)
+        else:
+            return '/c0'
+
+    def get_battery(self, battery_id):
+        import subprocess
+        command = self.binary + ' ' + self.controller + '/bbu show'
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+# Dell OpenManage omcliproxy
+class om:
+    def __init__(self, controller='0', binary='omcliproxy'):
+        self.controller = self.get_controller(controller)
+        self.binary = binary
+
+    def get_controller(self, controller):
+        if controller.isdigit() and controller >= 0:
+            return str(controller)
+        else:
+            return '0'
+
+    def get_battery(self, battery_id='0'):
+        import subprocess
+        command = self.binary + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+# Define our modules for the case switch
+def battery(args, card):
+    print card.get_battery(str(args.battery_id))
+    print "Battery module"
+
+def disk():
+    print "Disk module"
+
+# Define our module case switch
+modules = { 'battery': battery,
+            'disk':    disk,
+}
 
 def find_tools():
     supported_tools = {
-        'om':'omreport',
+        'om':'omcliproxy',
         'tw':'tw_cli'
     }
 
@@ -21,50 +90,19 @@ def find_tools():
             avail_tools.append(tool)
     return avail_tools
 
-class tw:
-    def __init__(self, controller='/c0', binary='tw_cli'):
-        self.controller = self.get_controller(controller)
-        self.binary = binary
-
-    def get_controller(self, controller):
-        import re
-        controller_regex = re.compile('/c[0-9]+')
-        controller_match = controller_regex.match(controller) 
-
-        if controller.isdigit() and controller >= 0:
-            return '/c' + str(controller)
-        elif controller_match:
-            return controller_match.group()
-        else:
-            return '/c0'
-
-    def get_battery(self):
-        import subprocess
-        command = self.binary + ' ' + self.controller + '/bbu show'
-        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
-
-class om:
-    def __init__(self, controller='0', binary='omreport'):
-        self.controller = self.get_controller(controller)
-        self.binary = binary
-
-    def get_controller(self, controller):
-        if controller.isdigit() and controller >= 0:
-            return str(controller)
-        else:
-            return '0'
-
-    def get_battery(self, battery=''):
-        import subprocess
-        command = self.binary + ' storage battery ' + battery + 'controller=' + self.controller
-        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
-
-avail_tools = find_tools()
-for driver in avail_tools:
-    # Call the relevant class by driver name
+avail_drivers = find_tools()
+if len(avail_drivers) > 1:
+    print "\nMore than one tool found. Select one manually\n"
+else:
+    # Call the relevant driver class by name
+    driver = avail_drivers[0]
     driver_class = globals()[driver]
     card = driver_class()
-    print card.get_battery()
+    if modules[parsed_args.module]:
+        modules[parsed_args.module](parsed_args, card)
 
+#for driver in avail_drivers:
+    # Call the relevant class by driver name
+#    driver_class = globals()[driver]
+#    card = driver_class()
+    #print card.get_battery()
