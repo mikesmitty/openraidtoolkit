@@ -4,8 +4,8 @@ import argparse
 
 # Argument parsing base section
 parser = argparse.ArgumentParser(description='RAID controller management interface.')
-parser.add_argument('-d', action='store', help='Select RAID driver to use (overrides auto-detection)', dest='driver_name')
-parser.add_argument('-t', action='store', help='RAID controller software tool name/path to use (overrides auto-detection)', dest='binary_name')
+parser.add_argument('-d', action='store', help='Select ORT driver to use (overrides auto-detection)', dest='driver_name')
+parser.add_argument('-t', action='store', help='RAID controller software tool name/path to use (overrides auto-detection)', dest='tool_name')
 parser.add_argument('-c', action='store', default=0, help='Controller ID number', dest='controller_id', type=int)
 parser.add_argument('-b', action='store', default=0, help='Battery ID number', dest='battery_id', type=int)
 
@@ -32,9 +32,9 @@ print parsed_args
 # Define RAID driver modules
 # 3ware tw_cli
 class tw:
-    def __init__(self, controller='0', binary='tw_cli'):
+    def __init__(self, controller='0', tool='tw_cli'):
         self.controller = self.select_controller(controller)
-        self.binary = binary
+        self.tool = tool
 
     def select_controller(self, controller):
         if controller.isdigit() and controller >= 0:
@@ -44,21 +44,21 @@ class tw:
 
     def get_battery(self, battery_id):
         import subprocess
-        command = self.binary + ' ' + self.controller + '/bbu show'
+        command = self.tool + ' ' + self.controller + '/bbu show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
     def get_disk(self, disk_id):
         import subprocess
-        command = self.binary + ' ' + self.controller + '/bbu show'
+        command = self.tool + ' ' + self.controller + '/bbu show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
 # Dell OpenManage omcliproxy
 class om:
-    def __init__(self, controller='0', binary='omcliproxy'):
+    def __init__(self, controller='0', tool='omcliproxy'):
         self.controller = self.select_controller(controller)
-        self.binary = binary
+        self.tool = tool
 
     def select_controller(self, controller):
         if controller.isdigit() and controller >= 0:
@@ -68,7 +68,7 @@ class om:
 
     def get_battery(self, battery_id='0'):
         import subprocess
-        command = self.binary + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
+        command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
@@ -80,11 +80,11 @@ class om:
 
         import subprocess
         if disk_id == 'all':
-            command = self.binary + ' omreport storage pdisk controller=' + self.controller
+            command = self.tool + ' omreport storage pdisk controller=' + self.controller
         elif disk_id_match:
-            command = self.binary + ' omreport storage pdisk controller=' + self.controller + ' pdisk=' + disk_id
+            command = self.tool + ' omreport storage pdisk controller=' + self.controller + ' pdisk=' + disk_id
         else:
-            command = self.binary + ' omreport storage pdisk controller=' + self.controller
+            command = self.tool + ' omreport storage pdisk controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
