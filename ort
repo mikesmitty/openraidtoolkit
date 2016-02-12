@@ -2,13 +2,14 @@
 
 import argparse
 
-# TODO do stuff here
+# Argument parsing base section
 parser = argparse.ArgumentParser(description='RAID controller management interface.')
 parser.add_argument('-d', action='store', help='Select RAID driver to use (overrides auto-detection)', dest='driver_name')
 parser.add_argument('-f', action='store', help='RAID controller software tool name to use (overrides auto-detection)', dest='driver_name')
 parser.add_argument('-c', action='store', default=0, help='Controller ID number', dest='controller_id', type=int)
 parser.add_argument('-b', action='store', default=0, help='Battery ID number', dest='battery_id', type=int)
 
+# Subparsers section starts here
 subparsers = parser.add_subparsers(help='commands', dest='module')
 
 # Battery options
@@ -73,6 +74,7 @@ class om:
 
     def get_disk(self, disk_id):
         import re
+        # disk_id format is either 0:0 or 0:0:0
         disk_id_regex = re.compile('^[0-9]+:[0-9]+(:[0-9]+)?$')
         disk_id_match = disk_id_regex.match(disk_id) 
 
@@ -86,24 +88,20 @@ class om:
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
-# Define our modules for the case switch
-def battery(args, card):
+# Define our operative module functions
+def battery_module(args, card):
     print card.get_battery(str(args.battery_id))
 
-def controller(args, card):
+def controller_module(args, card):
     print 'Controller module'
     #print card.get_disk(str(args.battery_id))
 
-def disk(args, card):
+def disk_module(args, card):
     print 'Disk module'
     #print card.get_disk(str(args.battery_id))
 
-# Define our module case switch
-modules = { 'battery':    battery,
-            'controller': controller,
-            'disk':       disk,
-}
-
+# This function will most likely only serve as a placeholder for now. Future methods will 
+# include finding the card model for compatibility, and possible inclusion of vendor binaries
 def find_tools():
     supported_tools = {
         'om':'omcliproxy',
@@ -117,19 +115,20 @@ def find_tools():
             avail_tools.append(tool)
     return avail_tools
 
+# Check for raid cli tools we recognize in the $PATH
 avail_drivers = find_tools()
-if len(avail_drivers) > 1:
-    print "\nMore than one tool found. Select one manually\n"
-else:
-    # Call the relevant driver class by name
+if len(avail_drivers) == 1:
+    # Receive the name of our driver from avail_drivers and instantiate its class
     driver = avail_drivers[0]
-    driver_class = globals()[driver]
-    card = driver_class()
-    if modules[parsed_args.module]:
-        modules[parsed_args.module](parsed_args, card)
+    driver_class_name = globals()[driver]
+    card_object = driver_class_name()
 
-#for driver in avail_drivers:
-    # Call the relevant class by driver name
-#    driver_class = globals()[driver]
-#    card = driver_class()
-    #print card.get_battery()
+    if parsed_args.module == 'battery':
+        battery_module(parsed_args, raid_card_object)
+    elif parsed_args.module == 'controller':
+        controller_module(parsed_args, raid_card_object)
+    elif parsed_args.module == 'disk':
+        disk_module(parsed_args, raid_card_object)
+
+else:
+    print "\nMore than one tool found in $PATH. Select one manually\n"
