@@ -13,14 +13,15 @@ subparsers = parser.add_subparsers(help='commands', dest='module')
 
 # Battery options
 battery_parser = subparsers.add_parser('battery', help='Manage controller battery')
-battery_parser.add_argument('option1', nargs='?', choices=['status', 'paper', 'scissors'])
-battery_parser.add_argument('option2', nargs='?', choices=['status', 'paper', 'scissors'])
+battery_parser.add_argument('option1', nargs='?', choices=['status'])
 
 # Controller options
 controller_parser = subparsers.add_parser('controller', help='Manage RAID controller')
 
 # Disk options
 disk_parser = subparsers.add_parser('disk', help='Manage physical disks')
+disk_parser.add_argument('option1', nargs='?', choices=['status'])
+#disk_parser.add_argument('option2', nargs='?', choices=['status'])
 
 #parsed_args = parser.parse_known_args()
 parsed_args = parser.parse_args()
@@ -31,10 +32,10 @@ print parsed_args
 # 3ware tw_cli
 class tw:
     def __init__(self, controller='0', binary='tw_cli'):
-        self.controller = self.get_controller(controller)
+        self.controller = self.select_controller(controller)
         self.binary = binary
 
-    def get_controller(self, controller):
+    def select_controller(self, controller):
         if controller.isdigit() and controller >= 0:
             return '/c' + str(controller)
         else:
@@ -46,13 +47,19 @@ class tw:
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
+    def get_disk(self, disk_id):
+        import subprocess
+        command = self.binary + ' ' + self.controller + '/bbu show'
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
 # Dell OpenManage omcliproxy
 class om:
     def __init__(self, controller='0', binary='omcliproxy'):
-        self.controller = self.get_controller(controller)
+        self.controller = self.select_controller(controller)
         self.binary = binary
 
-    def get_controller(self, controller):
+    def select_controller(self, controller):
         if controller.isdigit() and controller >= 0:
             return str(controller)
         else:
@@ -64,17 +71,37 @@ class om:
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
+    def get_disk(self, disk_id):
+        import re
+        disk_id_regex = re.compile('^[0-9]+:[0-9]+(:[0-9]+)?$')
+        disk_id_match = disk_id_regex.match(disk_id) 
+
+        import subprocess
+        if disk_id == 'all':
+            command = self.binary + ' omreport storage pdisk controller=' + self.controller
+        elif disk_id_match:
+            command = self.binary + ' omreport storage pdisk controller=' + self.controller + ' pdisk=' + disk_id
+        else:
+            command = self.binary + ' omreport storage pdisk controller=' + self.controller
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
 # Define our modules for the case switch
 def battery(args, card):
     print card.get_battery(str(args.battery_id))
-    print "Battery module"
 
-def disk():
-    print "Disk module"
+def controller(args, card):
+    print 'Controller module'
+    #print card.get_disk(str(args.battery_id))
+
+def disk(args, card):
+    print 'Disk module'
+    #print card.get_disk(str(args.battery_id))
 
 # Define our module case switch
-modules = { 'battery': battery,
-            'disk':    disk,
+modules = { 'battery':    battery,
+            'controller': controller,
+            'disk':       disk,
 }
 
 def find_tools():
