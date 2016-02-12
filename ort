@@ -121,7 +121,7 @@ if len(avail_drivers) == 1:
     # Receive the name of our driver from avail_drivers and instantiate its class
     driver = avail_drivers[0]
     driver_class_name = globals()[driver]
-    card_object = driver_class_name()
+    raid_card_object = driver_class_name()
 
     if parsed_args.module == 'battery':
         battery_module(parsed_args, raid_card_object)
