@@ -5,7 +5,7 @@ import argparse
 # Argument parsing base section
 parser = argparse.ArgumentParser(description='RAID controller management interface.')
 parser.add_argument('-d', action='store', help='Select RAID driver to use (overrides auto-detection)', dest='driver_name')
-parser.add_argument('-f', action='store', help='RAID controller software tool name to use (overrides auto-detection)', dest='driver_name')
+parser.add_argument('-t', action='store', help='RAID controller software tool name/path to use (overrides auto-detection)', dest='binary_name')
 parser.add_argument('-c', action='store', default=0, help='Controller ID number', dest='controller_id', type=int)
 parser.add_argument('-b', action='store', default=0, help='Battery ID number', dest='battery_id', type=int)
 
