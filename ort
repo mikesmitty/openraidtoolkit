@@ -4,8 +4,8 @@ import argparse
 
 # Argument parsing base section
 parser = argparse.ArgumentParser(description='RAID controller management interface.')
-parser.add_argument('-d', action='store', help='Select ORT driver to use (overrides auto-detection)', dest='driver_name')
-parser.add_argument('-t', action='store', help='RAID controller software tool name/path to use (overrides auto-detection)', dest='tool_name')
+parser.add_argument('-d', action='store', help='Use specified ort driver', dest='driver_name')
+parser.add_argument('-t', action='store', help='Optional RAID cli tool path', dest='tool_path')
 parser.add_argument('-c', action='store', default=0, help='Controller ID number', dest='controller_id', type=int)
 parser.add_argument('-b', action='store', default=0, help='Battery ID number', dest='battery_id', type=int)
 
@@ -37,7 +37,7 @@ class tw:
         self.tool = tool
 
     def select_controller(self, controller):
-        if controller.isdigit() and controller >= 0:
+        if controller >= 0:
             return '/c' + str(controller)
         else:
             return '/c0'
@@ -61,7 +61,7 @@ class om:
         self.tool = tool
 
     def select_controller(self, controller):
-        if controller.isdigit() and controller >= 0:
+        if controller >= 0:
             return str(controller)
         else:
             return '0'
@@ -102,7 +102,7 @@ def disk_module(args, card):
 
 # This function will most likely only serve as a placeholder for now. Future methods will 
 # include finding the card model for compatibility, and possible inclusion of vendor binaries
-def find_tools():
+def find_tools(name=None):
     supported_tools = {
         'om':'omcliproxy',
         'tw':'tw_cli'
@@ -110,25 +110,42 @@ def find_tools():
 
     from distutils.spawn import find_executable
     avail_tools = []
-    for tool, command in supported_tools.iteritems():
-        if find_executable(command):
-            avail_tools.append(tool)
+
+    if name == None:
+        for tool, command in supported_tools.iteritems():
+            if find_executable(command):
+                avail_tools.append(tool)
+    else:
+        if find_executable(supported_tools[name]):
+            avail_tools.append(name)
+        else:
+            exit("Unable to find tool associated with " + name + " driver in $PATH")
     return avail_tools
 
-# Check for raid cli tools we recognize in the $PATH
-avail_drivers = find_tools()
-if len(avail_drivers) == 1:
-    # Receive the name of our driver from avail_drivers and instantiate its class
+if parsed_args.driver_name == None:
+    # Check for raid cli tools we recognize in the $PATH
+    avail_drivers = find_tools()
+    if len(avail_drivers) == 1:
+        # Receive the name of our driver from avail_drivers
+        driver = avail_drivers[0]
+        driver_class_name = globals()[driver]
+else:
+    avail_drivers = find_tools(parsed_args.driver_name)
     driver = avail_drivers[0]
     driver_class_name = globals()[driver]
-    raid_card_object = driver_class_name()
 
-    if parsed_args.module == 'battery':
-        battery_module(parsed_args, raid_card_object)
-    elif parsed_args.module == 'controller':
-        controller_module(parsed_args, raid_card_object)
-    elif parsed_args.module == 'disk':
-        disk_module(parsed_args, raid_card_object)
+# Instantiate our driver class with controller_id and tool_path if provided
+if parsed_args.tool_path == None:
+    raid_card_object = driver_class_name(parsed_args.controller_id)
+else:
+    raid_card_object = driver_class_name(parsed_args.controller_id, parsed_args.tool_path)
+
+if parsed_args.module == 'battery':
+    battery_module(parsed_args, raid_card_object)
+elif parsed_args.module == 'controller':
+    controller_module(parsed_args, raid_card_object)
+elif parsed_args.module == 'disk':
+    disk_module(parsed_args, raid_card_object)
 
 else:
     print "\nMore than one tool found in $PATH. Select one manually\n"
