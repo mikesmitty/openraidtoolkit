@@ -14,10 +14,12 @@ subparsers = parser.add_subparsers(help='commands', dest='module')
 
 # Battery options
 battery_parser = subparsers.add_parser('battery', help='Manage controller battery')
-battery_parser.add_argument('option1', nargs='?', choices=['status'])
+battery_parser.add_argument('option1', nargs='?', choices=['status','test'])
+battery_parser.add_argument('option2', nargs='?', default=None)
 
 # Controller options
 controller_parser = subparsers.add_parser('controller', help='Manage RAID controller')
+controller_parser.add_argument('option1', nargs='?', choices=['status','list'])
 
 # Disk options
 disk_parser = subparsers.add_parser('disk', help='Manage physical disks')
@@ -42,10 +44,25 @@ class tw:
         else:
             return '/c0'
 
-    def get_battery(self, battery_id):
+    def list_controller(self):
         import subprocess
-        command = self.tool + ' ' + self.controller + '/bbu show'
+        command = self.tool + ' show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+    def get_battery(self, args, battery_id='0'):
+        import subprocess
+        if args.option1 == 'status' and args.option2 != None:
+            command = self.tool + ' ' + self.controller + '/bbu show ' + args.option2
+        elif args.option1 == 'test':
+            command = self.tool + ' ' + self.controller + '/bbu test'
+            interactive_warning(command)
+        elif args.option1 == 'status':
+            command = self.tool + ' ' + self.controller + '/bbu show all'
+        else:
+            command = self.tool + ' ' + self.controller + '/bbu show'
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        print command
         return output
 
     def get_disk(self, disk_id):
@@ -66,7 +83,13 @@ class om:
         else:
             return '0'
 
-    def get_battery(self, battery_id='0'):
+    def list_controller(self):
+        import subprocess
+        command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
+        output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
+        return output
+
+    def get_battery(self, args, battery_id='0'):
         import subprocess
         command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
@@ -88,13 +111,15 @@ class om:
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         return output
 
+def interactive_warning(command):
+    exit("\nInteractive commands not supported at this time. Run the following command:\n\n" + command + '\n')
+
 # Define our operative module functions
 def battery_module(args, card):
-    print card.get_battery(str(args.battery_id))
+    print card.get_battery(args, str(args.battery_id))
 
 def controller_module(args, card):
-    print 'Controller module'
-    #print card.get_disk(str(args.battery_id))
+    print card.get_disk(str(args.controller_id))
 
 def disk_module(args, card):
     print 'Disk module'
@@ -126,7 +151,7 @@ if parsed_args.driver_name == None:
     # Check for raid cli tools we recognize in the $PATH
     avail_drivers = find_tools()
     if len(avail_drivers) == 1:
-        # Receive the name of our driver from avail_drivers
+        # Receive the name of our driver from avail_drivers and grab its reference
         driver = avail_drivers[0]
         driver_class_name = globals()[driver]
 else:
