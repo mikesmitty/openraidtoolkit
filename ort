@@ -44,11 +44,11 @@ class tw:
         else:
             return '/c0'
 
-    def list_controller(self):
+    def list_controller(self, args):
         import subprocess
         command = self.tool + ' show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
     def get_battery(self, args, battery_id='0'):
         import subprocess
@@ -62,13 +62,13 @@ class tw:
         else:
             command = self.tool + ' ' + self.controller + '/bbu show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
-    def get_disk(self, disk_id):
+    def get_disk(self, args, disk_id):
         import subprocess
         command = self.tool + ' ' + self.controller + '/bbu show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
 # Dell OpenManage omcliproxy
 class om:
@@ -82,19 +82,19 @@ class om:
         else:
             return '0'
 
-    def list_controller(self):
+    def list_controller(self, args):
         import subprocess
         command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
     def get_battery(self, args, battery_id='0'):
         import subprocess
         command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
-    def get_disk(self, disk_id):
+    def get_disk(self, args, disk_id):
         import re
         # disk_id format is either 0:0 or 0:0:0
         disk_id_regex = re.compile('^[0-9]+:[0-9]+(:[0-9]+)?$')
@@ -108,17 +108,17 @@ class om:
         else:
             command = self.tool + ' omreport storage pdisk controller=' + self.controller
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        return output
+        print output
 
 def interactive_warning(command):
     exit("\nInteractive commands not supported at this time. Run the following command:\n\n" + command + '\n')
 
 # Define our operative module functions
 def battery_module(args, card):
-    print card.get_battery(args, str(args.battery_id))
+    card.get_battery(args, str(args.battery_id))
 
 def controller_module(args, card):
-    print card.get_disk(str(args.controller_id))
+    card.get_disk(args, str(args.controller_id))
 
 def disk_module(args, card):
     print 'Disk module'
