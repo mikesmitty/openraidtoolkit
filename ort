@@ -65,8 +65,20 @@ class tw:
         print output
 
     def get_disk(self, args, disk_id):
+        import re
+        # disk_id format is either 0:0 or 0:0:0
+        disk_id_regex = re.compile('^/p[0-9]+$')
+        disk_id_match = disk_id_regex.match(disk_id) 
+
         import subprocess
-        command = self.tool + ' ' + self.controller + '/bbu show'
+        if disk_id == 'all':
+            command = self.tool + ' ' + self.controller + ' show drivestatus'
+        elif disk_id_match:
+            command = self.tool + ' ' + self.controller + disk_id_match + ' show all'
+        elif disk_id.isdigit():
+            command = self.tool + ' ' + self.controller + '/p' + disk_id + ' show all'
+        else:
+            command = self.tool + ' ' + self.controller + ' show drivestatus'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
