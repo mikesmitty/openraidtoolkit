@@ -154,6 +154,8 @@ if parsed_args.driver_name == None:
         # Receive the name of our driver from avail_drivers and grab its reference
         driver = avail_drivers[0]
         driver_class_name = globals()[driver]
+    else:
+        print "\nMore than one tool found in $PATH. Select one manually\n"
 # Try to use the specified cli tool
 else:
     avail_drivers = find_tools(parsed_args.driver_name)
@@ -172,6 +174,3 @@ elif parsed_args.module == 'controller':
     controller_module(parsed_args, raid_card_object)
 elif parsed_args.module == 'disk':
     disk_module(parsed_args, raid_card_object)
-
-else:
-    print "\nMore than one tool found in $PATH. Select one manually\n"
