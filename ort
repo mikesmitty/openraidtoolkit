@@ -62,7 +62,6 @@ class tw:
         else:
             command = self.tool + ' ' + self.controller + '/bbu show'
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
-        print command
         return output
 
     def get_disk(self, disk_id):
@@ -147,6 +146,7 @@ def find_tools(name=None):
             exit("Unable to find tool associated with " + name + " driver in $PATH")
     return avail_tools
 
+# If we don't have a specified driver, find available cli tools
 if parsed_args.driver_name == None:
     # Check for raid cli tools we recognize in the $PATH
     avail_drivers = find_tools()
@@ -154,6 +154,7 @@ if parsed_args.driver_name == None:
         # Receive the name of our driver from avail_drivers and grab its reference
         driver = avail_drivers[0]
         driver_class_name = globals()[driver]
+# Try to use the specified cli tool
 else:
     avail_drivers = find_tools(parsed_args.driver_name)
     driver = avail_drivers[0]
