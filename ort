@@ -23,7 +23,7 @@ controller_parser.add_argument('option1', nargs='?', choices=['status','list'])
 
 # Disk options
 disk_parser = subparsers.add_parser('disk', help='Manage physical disks')
-disk_parser.add_argument('option1', nargs='?', default=None)
+disk_parser.add_argument('option1', nargs='?', choices=['status'])
 disk_parser.add_argument('option2', nargs='?', default=None)
 
 #parsed_args = parser.parse_known_args()
@@ -65,9 +65,7 @@ class tw:
         print output
 
     def get_disk(self, args):
-        import subprocess
         disk_id = parsed_args.option2
-
         if disk_id == None:
             disk_id = ''
 
@@ -83,6 +81,7 @@ class tw:
             command = self.tool + ' ' + self.controller + '/p' + disk_id + ' show all'
         else:
             command = self.tool + ' ' + self.controller + ' show drivestatus'
+        import subprocess
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
@@ -111,18 +110,22 @@ class om:
         print output
 
     def get_disk(self, args):
+        disk_id = parsed_args.option2
+        if disk_id == None:
+            disk_id = ''
+
         import re
         # disk_id format is either 0:0 or 0:0:0
         disk_id_regex = re.compile('^[0-9]+:[0-9]+(:[0-9]+)?$')
         disk_id_match = disk_id_regex.match(disk_id) 
 
-        import subprocess
         if disk_id == 'all':
             command = self.tool + ' omreport storage pdisk controller=' + self.controller
         elif disk_id_match:
             command = self.tool + ' omreport storage pdisk controller=' + self.controller + ' pdisk=' + disk_id
         else:
             command = self.tool + ' omreport storage pdisk controller=' + self.controller
+        import subprocess
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
@@ -137,7 +140,7 @@ def controller_module(args, card):
     card.get_disk(args, str(args.controller_id))
 
 def disk_module(args, card):
-    print card.get_disk(args)
+    card.get_disk(args)
 
 # This function will most likely only serve as a placeholder for now. Future methods will 
 # include finding the card model for compatibility, and possible inclusion of vendor binaries
