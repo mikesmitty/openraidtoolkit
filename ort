@@ -46,21 +46,21 @@ class tw:
 
     def list_controller(self, args):
         import subprocess
-        command = self.tool + ' show'
+        command = ''.join([self.tool, ' show'])
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
     def get_battery(self, args, battery_id='0'):
         import subprocess
         if args.option1 == 'status' and args.option2 != None:
-            command = self.tool + ' ' + self.controller + '/bbu show ' + args.option2
+            command = ''.join([self.tool, ' ', self.controller, '/bbu show ', args.option2])
         elif args.option1 == 'test':
-            command = self.tool + ' ' + self.controller + '/bbu test'
+            command = ''.join([self.tool, ' ', self.controller, '/bbu test'])
             interactive_warning(command)
         elif args.option1 == 'status':
-            command = self.tool + ' ' + self.controller + '/bbu show all'
+            command = ''.join([self.tool, ' ', self.controller, '/bbu show all'])
         else:
-            command = self.tool + ' ' + self.controller + '/bbu show'
+            command = ''.join([self.tool, ' ', self.controller, '/bbu show'])
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
@@ -75,12 +75,12 @@ class tw:
         disk_id_match = disk_id_regex.match(disk_id) 
 
         if disk_id == 'all':
-            command = self.tool + ' ' + self.controller + ' show drivestatus'
+            command = ''.join([self.tool, ' ', self.controller, ' show drivestatus'])
         elif disk_id_match or disk_id.isdigit():
             disk_id = disk_id_match.group()
-            command = self.tool + ' ' + self.controller + '/p' + disk_id + ' show all'
+            command = ''.join([self.tool, ' ', self.controller, '/p', disk_id, ' show all'])
         else:
-            command = self.tool + ' ' + self.controller + ' show drivestatus'
+            command = ''.join([self.tool, ' ', self.controller, ' show drivestatus'])
         import subprocess
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
@@ -99,13 +99,13 @@ class om:
 
     def list_controller(self, args):
         import subprocess
-        command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
+        command = ''.join([self.tool, ' omreport storage battery battery=', battery_id, ' controller=', self.controller])
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
     def get_battery(self, args, battery_id='0'):
         import subprocess
-        command = self.tool + ' omreport storage battery battery=' + battery_id + ' controller=' + self.controller
+        command = ''.join([self.tool, ' omreport storage battery battery=', battery_id, ' controller=', self.controller])
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
 
@@ -120,11 +120,11 @@ class om:
         disk_id_match = disk_id_regex.match(disk_id) 
 
         if disk_id == 'all':
-            command = self.tool + ' omreport storage pdisk controller=' + self.controller
+            command = ''.join([self.tool, ' omreport storage pdisk controller=', self.controller])
         elif disk_id_match:
-            command = self.tool + ' omreport storage pdisk controller=' + self.controller + ' pdisk=' + disk_id
+            command = ''.join([self.tool, ' omreport storage pdisk controller=', self.controller, ' pdisk=', disk_id])
         else:
-            command = self.tool + ' omreport storage pdisk controller=' + self.controller
+            command = ''.join([self.tool, ' omreport storage pdisk controller=', self.controller])
         import subprocess
         output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE).stdout.read()
         print output
