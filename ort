@@ -33,7 +33,7 @@ print parsed_args
 
 # Define RAID driver modules
 # 3ware tw_cli
-class tw:
+class tw(object):
     def __init__(self, controller='0', tool='tw_cli'):
         self.controller = self.select_controller(controller)
         self.tool = tool
@@ -86,7 +86,7 @@ class tw:
         print output
 
 # Dell OpenManage omcliproxy
-class om:
+class om(object):
     def __init__(self, controller='0', tool='omcliproxy'):
         self.controller = self.select_controller(controller)
         self.tool = tool
